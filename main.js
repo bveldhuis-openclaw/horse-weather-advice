@@ -136,25 +136,60 @@ function renderChart(times, temps, precs){
 
 async function update(){
   let lat, lon;
+
+  async function manualFallback(){
+    const useDefault = confirm('Wil je Heteren als locatie gebruiken (51.95667, 5.75556)? OK = Heteren, Annuleren = handmatige invoer.');
+    if(useDefault){ lat = 51.95667; lon = 5.75556; return; }
+    const input = prompt('Voer coordinaten in als: lat,lon (bijv. 51.95667,5.75556)');
+    if(input && input.includes(',')){
+      const parts = input.split(',').map(s=>parseFloat(s.trim()));
+      if(parts.length===2 && !isNaN(parts[0]) && !isNaN(parts[1])){ lat = parts[0]; lon = parts[1]; return; }
+      else { alert('Ongeldige invoer; gebruik Heteren als fallback'); lat = 51.95667; lon = 5.75556; return; }
+    } else { alert('Geen geldige invoer; gebruik Heteren als fallback'); lat = 51.95667; lon = 5.75556; return; }
+  }
+
   try{
-    const pos = await getPosition();
-    lat = pos.latitude; lon = pos.longitude;
-  }catch(e){
-    console.warn('Geolocation failed:', e);
-    // Prompt user for fallback: enter lat,lon or use default (Heteren)
-    const useDefault = confirm('Locatie is niet beschikbaar. Wil je Heteren als locatie gebruiken (51.95667, 5.75556)? Klik OK om Heteren te gebruiken, Annuleer om handmatig coords in te voeren.');
-    if(useDefault){
-      lat = 51.95667; lon = 5.75556;
-    } else {
-      const input = prompt('Voer coordinaten in als: lat,lon (bijv. 51.95667,5.75556)');
-      if(input && input.includes(',')){
-        const parts = input.split(',').map(s=>parseFloat(s.trim()));
-        if(parts.length===2 && !isNaN(parts[0]) && !isNaN(parts[1])){ lat = parts[0]; lon = parts[1]; }
-        else { alert('Ongeldige invoer; gebruik Heteren als fallback'); lat = 51.95667; lon = 5.75556; }
-      } else {
-        alert('Geen geldige invoer; gebruik Heteren als fallback'); lat = 51.95667; lon = 5.75556;
+    if(navigator.permissions && navigator.permissions.query){
+      try{
+        const perm = await navigator.permissions.query({ name: 'geolocation' });
+        if(perm.state === 'granted'){
+          const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude;
+        } else if(perm.state === 'prompt'){
+          // This will trigger the permission prompt
+          try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
+          catch(e){
+            // user denied or other error
+            const retry = confirm('De app heeft toestemming nodig om automatisch je locatie te gebruiken. Wil je toestemming geven? OK = probeer opnieuw, Annuleer = handmatige invoer/Heteren.');
+            if(retry){
+              try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
+              catch(err){ await manualFallback(); }
+            } else {
+              await manualFallback();
+            }
+          }
+        } else if(perm.state === 'denied'){
+          const go = confirm('Locatie delen is geblokkeerd in je browser. Wil je instructies zien om toestemming te wijzigen? OK = toon instructies, Annuleren = handmatige invoer/Heteren.');
+          if(go){
+            alert('Open je browserinstellingen en geef locatie toegang voor deze site. Nadat je dat hebt gedaan, klik OK.');
+            try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
+            catch(e){ await manualFallback(); }
+          } else {
+            await manualFallback();
+          }
+        }
+      } catch(ePerm){
+        // fallback when permissions.query fails
+        try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
+        catch(e){ await manualFallback(); }
       }
+    } else {
+      // Permissions API not available; prompt directly
+      try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
+      catch(e){ await manualFallback(); }
     }
+  } catch(e){
+    console.warn('Geolocation flow error:', e);
+    await manualFallback();
   }
 
   try{
