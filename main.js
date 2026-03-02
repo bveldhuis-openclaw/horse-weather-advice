@@ -291,7 +291,20 @@ window.addEventListener('appinstalled', (evt) => {
 // on load
 update();
 
-// simple service worker registration for PWA
+// simple service worker registration for PWA with update flow
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  navigator.serviceWorker.register('/sw.js').then(async (reg) => {
+    // try update immediately
+    try { await reg.update(); } catch(e){}
+
+    if(reg.waiting){
+      // ask waiting SW to skipWaiting, then reload when controller changes
+      reg.waiting.postMessage({action:'skipWaiting'});
+    }
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // reload once when new service worker takes control
+      window.location.reload();
+    });
+  }).catch(()=>{});
 }

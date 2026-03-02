@@ -17,6 +17,13 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// allow the page to trigger skipWaiting via postMessage
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
 // Network first for navigation/HTML, cache-first for assets
 self.addEventListener('fetch', (e) => {
   const req = e.request;
