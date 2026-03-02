@@ -260,7 +260,7 @@ async function update(){
   }
 
   try{
-    const url = `${API}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,precipitation_probability,windspeed_10m&forecast_days=3&timezone=Europe/Amsterdam&windspeed_unit=kmh`;
+    const url = `${API}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,precipitation_probability,windspeed_10m,cloudcover&daily=sunrise,sunset&forecast_days=3&timezone=Europe/Amsterdam&windspeed_unit=kmh`;
     const res = await fetch(url);
     const data = await res.json();
     const times = data.hourly.time.slice(0,72);
@@ -268,7 +268,81 @@ async function update(){
     const precs = data.hourly.precipitation.slice(0,72);
     const pps = data.hourly.precipitation_probability.slice(0,72);
     const winds = data.hourly.windspeed_10m.slice(0,72);
-    const summary = groupDayNight(times, temps, precs, pps, winds);
+    const clouds = data.hourly.cloudcover ? data.hourly.cloudcover.slice(0,72) : new Array(times.length).fill(0);
+
+    // daily sunrise/sunset arrays
+    const daily = data.daily || {};
+    const sunrises = daily.sunrise || [];
+    const sunsets = daily.sunset || [];
+
+    // helper: compute fructaan units for each hour
+    function fructaanForHour(idx){
+      const T = temps[idx];
+      const cloud = clouds[idx];
+      // consumption
+      let cons = 0;
+      if(T > 15) cons = 3;
+      else if(T > 10) cons = 2;
+      else if(T > 5) cons = 1;
+      else cons = 0;
+      // production
+      let prod = 0;
+      if(T < 5) {
+        // frost accumulation overrides
+        prod = 2;
+      } else {
+        // cloud-based
+        if(cloud >= 75) prod = 1;
+        else if(cloud >= 25) prod = 2;
+        else prod = 3;
+      }
+      // find sunrise/sunset for this hour's date
+      const dt = new Date(times[idx]);
+      const dateStr = dt.toISOString().slice(0,10);
+      // find matching daily index
+      let dayIndex = null;
+      if(daily.time){
+        dayIndex = daily.time.indexOf(dateStr);
+      }
+      if(dayIndex !== -1 && dayIndex !== null && daily.sunrise && daily.sunset){
+        // parse sunrise/sunset to datetime
+        const sr = new Date(daily.sunrise[dayIndex]);
+        const ss = new Date(daily.sunset[dayIndex]);
+        // if more than 4 hours after sunrise and more than 4 before sunset
+        const fourHours = 4 * 60 * 60 * 1000;
+        if(dt - sr > fourHours && ss - dt > fourHours){
+          prod += 1;
+        }
+      }
+      return prod - cons; // net change per hour
+    }
+
+    // Build summary with fructaan computed per period
+    // First compute per-hour net array
+    const hourlyNet = times.map((t,i)=>fructaanForHour(i));
+    // attach to grouping
+    const per = {};
+    times.forEach((t, i)=>{
+      const dt = new Date(t);
+      const dateKey = dt.toISOString().slice(0,10);
+      if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
+      const slot = (dt.getHours()>=9 && dt.getHours()<=21)? 'day':'night';
+      per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pps[i], wind:winds[i], net: hourlyNet[i]});
+    });
+
+    const keys = Object.keys(per).slice(0,3);
+    const summary = keys.map(k=>{
+      function summarize(arr){
+        if(!arr || arr.length===0) return {min_temp:null, max_temp:null, tot_prec:0, avg_pprob:0, max_wind:0, fructaan:0};
+        const tempsA = arr.map(x=>x.temp);
+        const precsA = arr.map(x=>x.prec);
+        const ppsA = arr.map(x=>x.pprob);
+        const windsA = arr.map(x=>x.wind);
+        const netA = arr.map(x=>x.net);
+        return {min_temp: Math.min(...tempsA), max_temp: Math.max(...tempsA), tot_prec: precsA.reduce((a,b)=>a+b,0), avg_pprob: ppsA.reduce((a,b)=>a+b,0)/ppsA.length, max_wind: Math.max(...windsA), fructaan: netA.reduce((a,b)=>a+b,0)};
+      }
+      return {date:k, day:summarize(per[k].day), night:summarize(per[k].night)};
+    });
 
     renderChart(times, temps, precs);
     renderSummary(summary);
