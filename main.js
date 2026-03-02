@@ -116,7 +116,7 @@ function renderSummary(summary){
     const metricCell = document.createElement('div'); metricCell.className='cell metric'; metricCell.textContent=m.label;
     row.appendChild(metricCell);
     periods.forEach(p=>{
-      const c = document.createElement('div'); c.className='cell';
+      const c = document.createElement('div'); c.className='cell numeric';
       const v = m.getter(p.data);
       c.textContent = (v == null || Number.isNaN(v))? '-' : (Math.round((v+Number.EPSILON)*10)/10);
       row.appendChild(c);
@@ -293,16 +293,25 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 if(installBtn){
   installBtn.addEventListener('click', async () => {
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const choiceResult = await deferredPrompt.userChoice;
-    if(choiceResult.outcome === 'accepted'){
-      console.log('User accepted the install prompt');
-      installBtn.style.display = 'none';
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if(choiceResult.outcome === 'accepted'){
+        console.log('User accepted the install prompt');
+        installBtn.style.display = 'none';
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      deferredPrompt = null;
     } else {
-      console.log('User dismissed the install prompt');
+      // No beforeinstallprompt available - show manual instructions
+      const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      if(isiOS){
+        alert('iOS install: gebruik de deelknop onderaan (Square met pijl) en kies "Zet in beginscherm"');
+      } else {
+        alert('Android/Chrome: open het menu (⋮) en kies "Add to Home screen" of gebruik de browser UI om toe te voegen.');
+      }
     }
-    deferredPrompt = null;
   });
 }
 
