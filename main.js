@@ -101,25 +101,36 @@ function renderChart(times, temps, precs){
   const overallMax = Math.max(...temps);
   const overallMean = temps.reduce((a,b)=>a+b,0)/temps.length;
   if(chartInstance) chartInstance.destroy();
+  // compute overall stats for additional lines
+  const overallMin = Math.min(...temps.map(v=>v));
+  const overallMax = Math.max(...temps.map(v=>v));
+  const overallMean = temps.reduce((a,b)=>a+b,0)/temps.length;
+
+  // create constant arrays for min/max/mean so they render as horizontal lines
+  const minLine = new Array(tempData.length).fill(Number((overallMin).toFixed(2)));
+  const maxLine = new Array(tempData.length).fill(Number((overallMax).toFixed(2)));
+  const meanLine = new Array(tempData.length).fill(Number((overallMean).toFixed(2)));
+
   chartInstance = new Chart(ctx,{
-    type:'bar',
-    data:{
+    data: {
       labels,
-      datasets:[
+      datasets: [
         { type:'bar', label:'Neerslag (mm)', data:precData, backgroundColor:'#87c1ff', yAxisID:'y1', barPercentage:0.8, categoryPercentage:0.9 },
-        { type:'line', label:'Temperatuur (°C)', data:tempData, borderColor:'#d62728', fill:false, yAxisID:'y2', tension:0.2 }
+        { type:'line', label:'Temperatuur (°C)', data:tempData, borderColor:'#d62728', backgroundColor:'#d62728', fill:false, yAxisID:'y2', tension:0.2, pointRadius:2 },
+        { type:'line', label:'Minimum (°C)', data:minLine, borderColor:'#6b7280', borderDash:[6,4], pointRadius:0, yAxisID:'y2' },
+        { type:'line', label:'Maximum (°C)', data:maxLine, borderColor:'#6b7280', borderDash:[6,4], pointRadius:0, yAxisID:'y2' },
+        { type:'line', label:'Gemiddelde (°C)', data:meanLine, borderColor:'#ff7f0e', borderDash:[4,3], pointRadius:0, yAxisID:'y2' }
       ]
     },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      scales:{
-        y1:{ beginAtZero:true, position:'left', grid:{display:false}, title:{display:true,text:'Neerslag (mm)'} },
-        y2:{ beginAtZero:true, position:'right', title:{display:true,text:'Temperatuur (°C)'}}
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      scales: {
+        y1: { beginAtZero:true, position:'left', grid:{display:false}, title:{display:true,text:'Neerslag (mm)'} },
+        y2: { beginAtZero:true, position:'right', title:{display:true,text:'Temperatuur (°C)'} }
       },
-      plugins:{legend:{display:true}},
-      elements:{
-        line:{borderWidth:3}
-      }
+      plugins: { legend:{display:true} },
+      elements: { line:{borderWidth:2} }
     }
   });
   // draw min/max/mean as horizontal lines using Chart.js plugin? Simple overlay: draw on canvas after render
