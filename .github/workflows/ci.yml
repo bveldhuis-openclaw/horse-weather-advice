@@ -16,6 +16,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Cache-bust assets
+        env:
+          CACHE_BUST: ${{ github.run_id }}
+        run: |
+          echo "Using cache-bust=${CACHE_BUST}"
+          files=(index.html main.js styles.css manifest.json)
+          for f in "${files[@]}"; do
+            if [ -f "$f" ]; then
+              # replace any ?v=... occurrences with the run id
+              sed -E -i "s/(\?v=)[^\"' ]+/\1${CACHE_BUST}/g" "$f" || true
+            fi
+          done
+
       - name: Build Docker image
         uses: docker/build-push-action@v4
         with:
