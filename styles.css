@@ -9,7 +9,25 @@ main{padding:12px}
 .card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(16,24,40,0.04)}
 .small{padding:10px}
 .muted{color:var(--muted);font-size:13px}
-#forecastChart{width:100%}
+#forecastChart{width:100%;height:260px}
+
+/* Summary table styling */
+.summary-table{display:block;overflow:auto}
+.summary-table .row{display:flex;align-items:flex-start;border-bottom:1px solid #eef4ff}
+.summary-table .row.header{background:#f0f6ff;font-weight:700}
+.summary-table .cell{padding:10px;min-width:120px;word-break:break-word}
+.summary-table .cell.metric{min-width:180px;color:#0b3d91;font-weight:600}
+.summary-table .cell.period{text-align:center;background:transparent}
+.summary-table .cell.iconcell{text-align:center}
+.ic{display:inline-block;width:20px;height:20px;border-radius:4px;margin-right:8px;vertical-align:middle}
+.ic-none{background:#eaf8ea;border:1px solid #d1f0d1}
+.ic-light{background:#fff5e6;border:1px solid #ffb74d}
+.ic-medium{background:#ffe6f0;border:1px solid #ff80ab}
+.ic-heavy{background:#e6f2ff;border:1px solid #4da6ff}
+.ic-ok{background:#eaf8ea;border:1px solid #cdeccf}
+.ic-warn{background:#fff9e6;border:1px solid #fff2bf}
+.ic-bad{background:#ffe6e6;border:1px solid #ffcccc}
+
 .legend-grid{display:flex;flex-direction:column;gap:8px}
 .legend-row{display:flex;align-items:center;gap:8px}
 .icon{display:inline-block;width:20px;height:20px;border-radius:4px}
