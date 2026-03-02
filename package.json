@@ -1,0 +1,17 @@
+{
+  "name": "horse-weather-advice",
+  "version": "0.1.0",
+  "description": "Mobile-first PWA to advise horse blanket and pasture decisions based on Open-Meteo forecasts",
+  "scripts": {
+    "lint:js": "eslint main.js --ext .js",
+    "lint:css": "stylelint 'styles.css'",
+    "lint": "npm run lint:js && npm run lint:css",
+    "start:static": "python3 -m http.server 8000 --directory ."
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "eslint-plugin-html": "^6.1.1",
+    "stylelint": "^14.0.0",
+    "stylelint-config-standard": "^25.0.0"
+  }
+}
