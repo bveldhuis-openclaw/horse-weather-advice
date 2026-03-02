@@ -1,0 +1,28 @@
+/* Mobile-first simple styling */
+:root{--primary:#0b3d91;--muted:#6b7280;--card:#ffffff;--accent:#d62728}
+*{box-sizing:border-box}
+html,body,#app{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#f2f6ff;color:#111}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,var(--primary),#2a60b8);color:#fff}
+.topbar h1{font-size:18px;margin:0}
+.topbar button{background:rgba(255,255,255,0.12);border:0;color:#fff;padding:8px 10px;border-radius:8px}
+main{padding:12px}
+.card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(16,24,40,0.04)}
+.small{padding:10px}
+.muted{color:var(--muted);font-size:13px}
+#forecastChart{width:100%}
+.legend-grid{display:flex;flex-direction:column;gap:8px}
+.legend-row{display:flex;align-items:center;gap:8px}
+.icon{display:inline-block;width:20px;height:20px;border-radius:4px}
+.icon-none{background:#eaf8ea;border:1px solid #d1f0d1}
+.icon-light{background:#fff5e6;border:1px solid #ffb74d}
+.icon-medium{background:#ffe6f0;border:1px solid #ff80ab}
+.icon-heavy{background:#e6f2ff;border:1px solid #4da6ff}
+.icon-ok{background:#eaf8ea;border:1px solid #cdeccf}
+.icon-warn{background:#fff9e6;border:1px solid #fff2bf}
+.icon-bad{background:#ffe6e6;border:1px solid #ffcccc}
+
+/* responsive */
+@media(min-width:700px){
+  main{max-width:900px;margin:12px auto}
+  .legend-grid{flex-direction:row;flex-wrap:wrap}
+}

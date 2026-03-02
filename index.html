@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Horse Weather Advice</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b3d91">
+  <link rel="stylesheet" href="/styles.css">
+  <!-- Chart.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <h1>Horse Weather Advice</h1>
+      <button id="refreshBtn">Vernieuwen</button>
+    </header>
+
+    <main>
+      <section id="intro" class="card">
+        <p>Deze app toont advies over dekens en weidegang gebaseerd op de lokale weersvoorspelling (72u). Geef locatie toestemming als daarom gevraagd wordt.</p>
+      </section>
+
+      <section id="chart-section" class="card">
+        <canvas id="forecastChart" height="220"></canvas>
+      </section>
+
+      <section id="table-section" class="card">
+        <div id="summary"></div>
+      </section>
+
+      <section id="legend" class="card small">
+        <h3>Legenda</h3>
+        <div class="legend-grid">
+          <div class="legend-row"><span class="icon icon-none"></span><span>Geen deken (0 g)</span></div>
+          <div class="legend-row"><span class="icon icon-light"></span><span>Lichte sheet (100 g)</span></div>
+          <div class="legend-row"><span class="icon icon-medium"></span><span>Dunne/medium (200 g)</span></div>
+          <div class="legend-row"><span class="icon icon-heavy"></span><span>Medium/zwaar (300 g)</span></div>
+          <div class="legend-row"><span class="icon icon-ok"></span><span>OK in de wei</span></div>
+          <div class="legend-row"><span class="icon icon-warn"></span><span>Waarschuwing (modder)</span></div>
+          <div class="legend-row"><span class="icon icon-bad"></span><span>Te nat — niet in de wei</span></div>
+        </div>
+      </section>
+
+      <section class="card small muted">
+        <p>Bron: Open‑Meteo • App: Jarvis</p>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
