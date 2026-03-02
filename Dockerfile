@@ -1,7 +1,11 @@
 FROM nginx:stable-alpine
-COPY . /usr/share/nginx/html:ro
-# small optimization: remove default conf and use simple one
-RUN rm /etc/nginx/conf.d/default.conf
+
+# Remove default site config and replace with our nginx config
+RUN rm -f /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy site files into nginx webroot
+COPY . /usr/share/nginx/html
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
