@@ -213,6 +213,37 @@ async function update(){
 
 refreshBtn.addEventListener('click', ()=>update());
 
+// Install prompt handling
+const installBtn = document.getElementById('installBtn');
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e; // Save the event for later
+  if(installBtn) {
+    installBtn.style.display = 'inline-block';
+  }
+});
+
+if(installBtn){
+  installBtn.addEventListener('click', async () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const choiceResult = await deferredPrompt.userChoice;
+    if(choiceResult.outcome === 'accepted'){
+      console.log('User accepted the install prompt');
+      installBtn.style.display = 'none';
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+    deferredPrompt = null;
+  });
+}
+
+window.addEventListener('appinstalled', (evt) => {
+  console.log('App installed');
+  if(installBtn) installBtn.style.display = 'none';
+});
+
 // on load
 update();
 
