@@ -108,6 +108,7 @@ function renderSummary(summary){
     {id:'prec', label:'Tot. neerslag (mm)', getter: s=>s.tot_prec},
     {id:'pp', label:'Gem. kans neerslag (%)', getter: s=>s.avg_pprob},
     {id:'wind', label:'Max wind (km/h)', getter: s=>s.max_wind},
+    {id:'fruc', label:'Fructaanindex (units)', getter: s=>s.fructaan},
   ];
 
   // Build rows for each metric
@@ -125,6 +126,27 @@ function renderSummary(summary){
   });
 
   // Dekenadvies row with icons + grams
+
+  // Add a risk row derived from fructaan value (if present)
+  const rowFrucRisk = document.createElement('div'); rowFrucRisk.className='row';
+  const frLabel = document.createElement('div'); frLabel.className='cell metric'; frLabel.textContent='Fructaan risico';
+  rowFrucRisk.appendChild(frLabel);
+  periods.forEach(p=>{
+    const c=document.createElement('div'); c.className='cell iconcell';
+    const val = p.data.fructaan;
+    if(val===undefined || val===null || isNaN(Number(val))){ c.textContent='-'; }
+    else{
+      const v = Number(val);
+      let risk='laag';
+      if(v>30) risk='zeer hoog';
+      else if(v>15) risk='hoog';
+      else if(v>5) risk='gematigd';
+      else risk='laag';
+      c.textContent = `${Math.round(v*10)/10} (${risk})`;
+    }
+    rowFrucRisk.appendChild(c);
+  });
+  table.appendChild(rowFrucRisk);
   const rowDek = document.createElement('div'); rowDek.className='row';
   const dekLabel = document.createElement('div'); dekLabel.className='cell metric'; dekLabel.textContent='Dekenadvies';
   rowDek.appendChild(dekLabel);
