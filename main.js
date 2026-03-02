@@ -69,13 +69,26 @@ function renderSummary(summary){
   function isEmptyPeriod(p){
     const d = p.data;
     if(!d) return true;
-    // consider empty if min_temp is null or all numeric fields are zero/NaN
+    // if min temp missing => empty
     if(d.min_temp === null || d.min_temp === undefined) return true;
-    const allZero = ( (Number(d.min_temp)===0) && (Number(d.max_temp)===0) && (Number(d.tot_prec)===0) && (Number(d.avg_pprob)===0) );
-    if(allZero) return true;
+    // numericize
+    const minT = Number(d.min_temp);
+    const maxT = Number(d.max_temp);
+    const totP = Number(d.tot_prec);
+    const avgP = Number(d.avg_pprob);
+    // if all stats are zero or NaN, treat as empty
+    const vals = [minT, maxT, totP, avgP];
+    const allZeroOrNaN = vals.every(v => (isNaN(v) || v === 0));
+    if(allZeroOrNaN) return true;
+    // if temperature range is negligible and no precipitation probability, consider empty
+    if(!isNaN(minT) && !isNaN(maxT) && Math.abs(maxT - minT) < 0.1 && (isNaN(avgP) || avgP === 0) && totP === 0) return true;
     return false;
   }
-  const periods = rawPeriods.filter(p=>!isEmptyPeriod(p)).slice(0,6);
+  let periods = rawPeriods.filter(p=>!isEmptyPeriod(p));
+  // debug logs to help diagnose client-side
+  console.debug('rawPeriods', rawPeriods);
+  console.debug('filtered periods', periods);
+  periods = periods.slice(0,6);
 
   // build header row with one metric cell + one header per period
   const header = document.createElement('div'); header.className='row header';
