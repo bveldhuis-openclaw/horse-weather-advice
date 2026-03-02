@@ -58,12 +58,24 @@ function renderSummary(summary){
   table.className='summary-table';
 
   // Build periods (two columns per date: dag, nacht)
-  const periods = [];
+  const rawPeriods = [];
   summary.forEach(s=>{
     const d = s.date.replace(/(\d{4})-(\d{2})-(\d{2})/,'$3/$2'); // dd/mm
-    periods.push({label: d + ' (dag)', data: s.day});
-    periods.push({label: d + ' (nacht)', data: s.night});
+    rawPeriods.push({label: d + ' (dag)', data: s.day});
+    rawPeriods.push({label: d + ' (nacht)', data: s.night});
   });
+
+  // Filter out empty periods (no meaningful data) and limit to 5 columns
+  function isEmptyPeriod(p){
+    const d = p.data;
+    if(!d) return true;
+    // consider empty if min_temp is null or all numeric fields are zero/NaN
+    if(d.min_temp === null || d.min_temp === undefined) return true;
+    const allZero = ( (Number(d.min_temp)===0) && (Number(d.max_temp)===0) && (Number(d.tot_prec)===0) && (Number(d.avg_pprob)===0) );
+    if(allZero) return true;
+    return false;
+  }
+  const periods = rawPeriods.filter(p=>!isEmptyPeriod(p)).slice(0,5);
 
   // build header row with one metric cell + one header per period
   const header = document.createElement('div'); header.className='row header';
@@ -71,8 +83,6 @@ function renderSummary(summary){
   header.appendChild(metricHeader);
   periods.forEach(p=>{
     const ph = document.createElement('div'); ph.className = 'cell period';
-    // split label into two lines for clarity
-    const parts = p.label.split('\n');
     ph.innerHTML = p.label.replace('\n','<br>');
     header.appendChild(ph);
   });
