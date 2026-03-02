@@ -97,9 +97,6 @@ function renderChart(times, temps, precs){
   const labels = times.map(t=> new Date(t).toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}));
   const tempData = temps.map(v=>Math.round(v*10)/10);
   const precData = precs.map(v=>Math.round(v*10)/10);
-  const overallMin = Math.min(...temps);
-  const overallMax = Math.max(...temps);
-  const overallMean = temps.reduce((a,b)=>a+b,0)/temps.length;
   if(chartInstance) chartInstance.destroy();
   // compute overall stats for additional lines
   const overallMin = Math.min(...temps.map(v=>v));
