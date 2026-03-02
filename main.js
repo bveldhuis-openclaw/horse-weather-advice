@@ -285,12 +285,26 @@ async function update(){
     const url = `${API}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,precipitation_probability,windspeed_10m,cloudcover&daily=sunrise,sunset&forecast_days=3&timezone=Europe/Amsterdam&windspeed_unit=kmh`;
     const res = await fetch(url);
     const data = await res.json();
-    const times = data.hourly.time.slice(0,72);
-    const temps = data.hourly.temperature_2m.slice(0,72);
-    const precs = data.hourly.precipitation.slice(0,72);
-    const pps = data.hourly.precipitation_probability.slice(0,72);
-    const winds = data.hourly.windspeed_10m.slice(0,72);
-    const clouds = data.hourly.cloudcover ? data.hourly.cloudcover.slice(0,72) : new Array(times.length).fill(0);
+    // raw hourly arrays from API
+    let rawTimes = data.hourly.time;
+    let rawTemps = data.hourly.temperature_2m;
+    let rawPrecs = data.hourly.precipitation;
+    let rawPps = data.hourly.precipitation_probability;
+    let rawWinds = data.hourly.windspeed_10m;
+    let rawClouds = data.hourly.cloudcover || new Array(rawTimes.length).fill(0);
+
+    // choose only future hours starting from now (local) up to next 72 hours
+    const now = new Date();
+    let startIdx = rawTimes.findIndex(t => new Date(t) >= now);
+    if(startIdx === -1) startIdx = 0; // fallback if API times are all in past for some reason
+    const endIdx = Math.min(startIdx + 72, rawTimes.length);
+
+    const times = rawTimes.slice(startIdx, endIdx);
+    const temps = rawTemps.slice(startIdx, endIdx);
+    const precs = rawPrecs.slice(startIdx, endIdx);
+    const pps = rawPps.slice(startIdx, endIdx);
+    const winds = rawWinds.slice(startIdx, endIdx);
+    const clouds = rawClouds.slice(startIdx, endIdx);
 
     // daily sunrise/sunset arrays
     const daily = data.daily || {};
