@@ -29,3 +29,20 @@ jobs:
           if [ ! -f index.html ]; then echo "index.html missing"; exit 1; fi
           if [ ! -f styles.css ]; then echo "styles.css missing"; exit 1; fi
           if [ $(wc -c < styles.css) -lt 10 ]; then echo "styles.css too small"; exit 1; fi
+
+      - name: Run container and smoke tests
+        run: |
+          # run the built image and test HTTP
+          docker run -d --rm -p 8080:80 --name hw_ci horse-weather-advice:ci
+          # wait for container startup
+          for i in {1..20}; do
+            if curl -sSf http://localhost:8080/ >/dev/null 2>&1; then break; fi
+            echo "waiting for container... ($i)"; sleep 1;
+          done
+          ./tests/test_http.sh
+        env:
+          BASE_URL: http://localhost:8080
+        # ensure cleanup
+        continue-on-error: false
+        shell: bash
+        timeout-minutes: 5
