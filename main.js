@@ -56,36 +56,80 @@ function renderSummary(summary){
   // create table transposed
   const table = document.createElement('div');
   table.className='summary-table';
-  // build header row
-  const header = document.createElement('div'); header.className='row header';
-  header.innerHTML = '<div class="cell metric"></div>' + summary.map(s=>`<div class="cell period">${s.date.replace(/(\d{4})-(\d{2})-(\d{2})/,'$3/$2')}</div>`).join('');
-  table.appendChild(header);
-  // metrics
-  const metrics = [
-    {id:'min', label:'Min. temp (°C)', getter: s=>s.day.min_temp},
-    {id:'max', label:'Max. temp (°C)', getter: s=>s.day.max_temp},
-    {id:'prec', label:'Tot. neerslag (mm)', getter: s=>s.day.tot_prec},
-    {id:'pp', label:'Gem. kans neerslag (%)', getter: s=>s.day.avg_pprob},
-    {id:'wind', label:'Max wind (km/h)', getter: s=>s.day.max_wind},
-  ];
-  // we will show for day and night separately as periods
-  // flatten periods
+
+  // Build periods (two columns per date: dag, nacht)
   const periods = [];
-  summary.forEach(s=>{ periods.push({label:s.date+' (dag)', data:s.day}); periods.push({label:s.date+' (nacht)', data:s.night}); });
+  summary.forEach(s=>{
+    const d = s.date.replace(/(\d{4})-(\d{2})-(\d{2})/,'$3/$2'); // dd/mm
+    periods.push({label: d + ' (dag)', data: s.day});
+    periods.push({label: d + ' (nacht)', data: s.night});
+  });
+
+  // build header row with one metric cell + one header per period
+  const header = document.createElement('div'); header.className='row header';
+  const metricHeader = document.createElement('div'); metricHeader.className = 'cell metric';
+  header.appendChild(metricHeader);
+  periods.forEach(p=>{
+    const ph = document.createElement('div'); ph.className = 'cell period';
+    // split label into two lines for clarity
+    const parts = p.label.split('\n');
+    ph.innerHTML = p.label.replace('\n','<br>');
+    header.appendChild(ph);
+  });
+  table.appendChild(header);
+
+  // metrics definitions
+  const metrics = [
+    {id:'min', label:'Min. temp (°C)', getter: s=>s.min_temp},
+    {id:'max', label:'Max. temp (°C)', getter: s=>s.max_temp},
+    {id:'prec', label:'Tot. neerslag (mm)', getter: s=>s.tot_prec},
+    {id:'pp', label:'Gem. kans neerslag (%)', getter: s=>s.avg_pprob},
+    {id:'wind', label:'Max wind (km/h)', getter: s=>s.max_wind},
+  ];
+
   // Build rows for each metric
   metrics.forEach(m=>{
     const row = document.createElement('div'); row.className='row';
     const metricCell = document.createElement('div'); metricCell.className='cell metric'; metricCell.textContent=m.label;
     row.appendChild(metricCell);
-    periods.forEach(p=>{ const c=document.createElement('div'); c.className='cell'; const v = (m.id==='min')? p.data.min_temp : (m.id==='max')? p.data.max_temp : (m.id==='prec')? p.data.tot_prec : (m.id==='pp')? p.data.avg_pprob : p.data.max_wind; c.textContent = (v==null)? '-' : (Math.round((v+Number.EPSILON)*10)/10); row.appendChild(c); });
+    periods.forEach(p=>{
+      const c = document.createElement('div'); c.className='cell';
+      const v = m.getter(p.data);
+      c.textContent = (v == null || Number.isNaN(v))? '-' : (Math.round((v+Number.EPSILON)*10)/10);
+      row.appendChild(c);
+    });
     table.appendChild(row);
   });
+
   // Dekenadvies row with icons + grams
-  const rowDek = document.createElement('div'); rowDek.className='row'; rowDek.innerHTML='<div class="cell metric">Dekenadvies</div>';
-  periods.forEach(p=>{ const c=document.createElement('div'); c.className='cell iconcell'; const adv = blanketAdvice(p.data.min_temp); c.innerHTML=`<span class="ic ic-${adv.code}"></span> ${adv.grams}g`; rowDek.appendChild(c); }); table.appendChild(rowDek);
+  const rowDek = document.createElement('div'); rowDek.className='row';
+  const dekLabel = document.createElement('div'); dekLabel.className='cell metric'; dekLabel.textContent='Dekenadvies';
+  rowDek.appendChild(dekLabel);
+  periods.forEach(p=>{
+    const c=document.createElement('div'); c.className='cell iconcell';
+    const adv = blanketAdvice(p.data.min_temp);
+    const span = document.createElement('span'); span.className = 'ic ic-' + adv.code;
+    c.appendChild(span);
+    const txt = document.createTextNode(' ' + adv.grams + 'g');
+    c.appendChild(txt);
+    rowDek.appendChild(c);
+  });
+  table.appendChild(rowDek);
+
   // Weideadvies
-  const rowWeide = document.createElement('div'); rowWeide.className='row'; rowWeide.innerHTML='<div class="cell metric">Weideadvies</div>';
-  periods.forEach(p=>{ const c=document.createElement('div'); c.className='cell iconcell'; const adv = pastureAdvice(p.data.tot_prec); c.innerHTML=`<span class="ic ic-${adv.code}"></span> ${adv.text}`; rowWeide.appendChild(c); }); table.appendChild(rowWeide);
+  const rowWeide = document.createElement('div'); rowWeide.className='row';
+  const weideLabel = document.createElement('div'); weideLabel.className='cell metric'; weideLabel.textContent='Weideadvies';
+  rowWeide.appendChild(weideLabel);
+  periods.forEach(p=>{
+    const c=document.createElement('div'); c.className='cell iconcell';
+    const adv = pastureAdvice(p.data.tot_prec);
+    const span = document.createElement('span'); span.className = 'ic ic-' + adv.code;
+    c.appendChild(span);
+    const txt = document.createTextNode(' ' + adv.text);
+    c.appendChild(txt);
+    rowWeide.appendChild(c);
+  });
+  table.appendChild(rowWeide);
 
   container.appendChild(table);
 }
