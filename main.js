@@ -75,7 +75,7 @@ function renderSummary(summary){
     if(allZero) return true;
     return false;
   }
-  const periods = rawPeriods.filter(p=>!isEmptyPeriod(p)).slice(0,5);
+  const periods = rawPeriods.filter(p=>!isEmptyPeriod(p)).slice(0,6);
 
   // build header row with one metric cell + one header per period
   const header = document.createElement('div'); header.className='row header';
