@@ -1,3 +1,5 @@
+import Chart from 'https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js';
+
 const API = 'https://api.open-meteo.com/v1/forecast';
 const chartEl = document.getElementById('forecastChart');
 const refreshBtn = document.getElementById('refreshBtn');
@@ -9,7 +11,7 @@ async function getPosition(){
   });
 }
 
-function hoursFromNowArray(times){ return times.map(t=>new Date(t)); }
+const hoursFromNowArray = (times) => times.map(t=>new Date(t));
 
 function blanketAdvice(minTemp){
   if(minTemp==null) return {text:'Geen data',code:'none', grams:0};
@@ -41,11 +43,11 @@ function groupDayNight(times, temps, precs, pprobs, winds){
   const keys = Object.keys(per).slice(0,3);
   const summary = keys.map(k=>{
     const day = per[k].day; const night = per[k].night;
-    function summarize(arr){
+    const summarize = (arr) => {
       if(!arr || arr.length===0) return {min_temp:null, max_temp:null, tot_prec:0, avg_pprob:0, max_wind:0};
-      const temps = arr.map(x=>x.temp); const precs = arr.map(x=>x.prec); const pps = arr.map(x=>x.pprob); const winds = arr.map(x=>x.wind);
-      return {min_temp: Math.min(...temps), max_temp:Math.max(...temps), tot_prec: precs.reduce((a,b)=>a+b,0), avg_pprob: pps.reduce((a,b)=>a+b,0)/pps.length, max_wind: Math.max(...winds)};
-    }
+      const tempsArr = arr.map(x=>x.temp); const precsArr = arr.map(x=>x.prec); const ppsArr = arr.map(x=>x.pprob); const windsArr = arr.map(x=>x.wind);
+      return {min_temp: Math.min(...tempsArr), max_temp:Math.max(...tempsArr), tot_prec: precsArr.reduce((a,b)=>a+b,0), avg_pprob: ppsArr.reduce((a,b)=>a+b,0)/ppsArr.length, max_wind: Math.max(...windsArr)};
+    };
     return {date:k, day:summarize(day), night:summarize(night)};
   });
   return summary;
@@ -63,7 +65,7 @@ function renderSummary(summary){
     rawPeriods.push({label: d + ' (nacht)', data: s.night});
   });
 
-  function isEmptyPeriod(p){
+  const isEmptyPeriod = (p) => {
     const d = p.data;
     if(!d) return true;
     if(d.min_temp === null || d.min_temp === undefined) return true;
@@ -76,7 +78,7 @@ function renderSummary(summary){
     if(allZeroOrNaN) return true;
     if(!isNaN(minT) && !isNaN(maxT) && Math.abs(maxT - minT) < 0.1 && (isNaN(avgP) || avgP === 0) && totP === 0) return true;
     return false;
-  }
+  };
 
   const periods = rawPeriods.filter(p=>!isEmptyPeriod(p)).slice(0,6);
 
@@ -204,14 +206,12 @@ function renderChart(times, temps, precs){
       elements: { line:{borderWidth:2} }
     }
   });
-  // draw min/max/mean as horizontal lines using Chart.js plugin? Simple overlay: draw on canvas after render
-  // We will add plugin
 }
 
 async function update(){
   let lat, lon;
 
-  async function manualFallback(){
+  const manualFallback = async () => {
     const useDefault = confirm('Wil je Heteren als locatie gebruiken (51.95667, 5.75556)? OK = Heteren, Annuleren = handmatige invoer.');
     if(useDefault){ lat = 51.95667; lon = 5.75556; return; }
     const input = prompt('Voer coordinaten in als: lat,lon (bijv. 51.95667,5.75556)');
@@ -220,7 +220,7 @@ async function update(){
       if(parts.length===2 && !isNaN(parts[0]) && !isNaN(parts[1])){ lat = parts[0]; lon = parts[1]; return; }
       else { alert('Ongeldige invoer; gebruik Heteren als fallback'); lat = 51.95667; lon = 5.75556; return; }
     } else { alert('Geen geldige invoer; gebruik Heteren als fallback'); lat = 51.95667; lon = 5.75556; return; }
-  }
+  };
 
   try{
     if(navigator.permissions && navigator.permissions.query){
@@ -229,10 +229,8 @@ async function update(){
         if(perm.state === 'granted'){
           const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude;
         } else if(perm.state === 'prompt'){
-          // This will trigger the permission prompt
           try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
           catch(e){
-            // user denied or other error
             const retry = confirm('De app heeft toestemming nodig om automatisch je locatie te gebruiken. Wil je toestemming geven? OK = probeer opnieuw, Annuleer = handmatige invoer/Heteren.');
             if(retry){
               try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
@@ -242,7 +240,7 @@ async function update(){
             }
           }
         } else if(perm.state === 'denied'){
-          const go = confirm('Locatie delen is geblokkeerd in je browser. Wil je instructies zien om toestemming te wijzigen? OK = toon instructies, Annuleren = handmatige invoer/Heteren.');
+          const go = confirm('Locatie delen is geblokkeerd in je browser. Wil je instructies zien om toestemming te wijzigen? OK = toon instructies, Annuleer = handmatige invoer/Heteren.');
           if(go){
             alert('Open je browserinstellingen en geef locatie toegang voor deze site. Nadat je dat hebt gedaan, klik OK.');
             try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
@@ -252,12 +250,10 @@ async function update(){
           }
         }
       } catch(ePerm){
-        // fallback when permissions.query fails
         try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
         catch(e){ await manualFallback(); }
       }
     } else {
-      // Permissions API not available; prompt directly
       try{ const pos = await getPosition(); lat = pos.latitude; lon = pos.longitude; }
       catch(e){ await manualFallback(); }
     }
@@ -279,14 +275,12 @@ async function update(){
     let rawClouds = data.hourly.cloudcover || new Array(rawTimes.length).fill(0);
 
     // choose only future hours starting from now (in the API timezone) up to next 72 hours
-    // API times are in the requested timezone (Europe/Amsterdam). Build current time string in that timezone.
-    function nowInTZString(timeZone){
+    const nowInTZString = (timeZone) => {
       const now = new Date();
       const f = new Intl.DateTimeFormat('en-CA', { timeZone, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
       const parts = f.formatToParts(now);
       const p = {};
       parts.forEach(x=>p[x.type]=x.value);
-      // en-CA gives YYYY-MM-DD, but parts allow us to assemble
       const yyyy = p.year; const mm = p.month; const dd = p.day; const hh = p.hour; const min = p.minute;
       return `${yyyy}-${mm}-${dd}T${hh}:${min}`; // matches API format
     }
@@ -308,7 +302,7 @@ async function update(){
     const sunsets = daily.sunset || [];
 
     // helper: compute fructaan units for each hour
-    function fructaanForHour(idx){
+    const fructaanForHour = (idx) => {
       const T = temps[idx];
       const cloud = clouds[idx];
       // consumption
@@ -331,37 +325,107 @@ async function update(){
       // find sunrise/sunset for this hour's date
       const dt = new Date(times[idx]);
       const dateStr = dt.toISOString().slice(0,10);
-      // find matching daily index
       let dayIndex = null;
       if(daily.time){
         dayIndex = daily.time.indexOf(dateStr);
       }
       if(dayIndex !== -1 && dayIndex !== null && daily.sunrise && daily.sunset){
-        // parse sunrise/sunset to datetime
         const sr = new Date(daily.sunrise[dayIndex]);
         const ss = new Date(daily.sunset[dayIndex]);
-        // if more than 4 hours after sunrise and more than 4 before sunset
         const fourHours = 4 * 60 * 60 * 1000;
         if(dt - sr > fourHours && ss - dt > fourHours){
           prod += 1;
         }
       }
       return prod - cons; // net change per hour
-    }
+    };
 
     // Build summary with fructaan computed per period
-    // First compute per-hour net array
     const hourlyNet = times.map((t,i)=>fructaanForHour(i));
-    // attach to grouping
     const per = {};
     times.forEach((t, i)=>{
       const dt = new Date(t);
       const dateKey = dt.toISOString().slice(0,10);
       if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
-      // Day: 08:00 (inclusive) to 20:00 (exclusive). Night: 20:00 - 08:00
-    const hour = dt.getHours();
-    const slot = (hour >= 8 && hour < 20) ? 'day' : 'night';
+      const hour = dt.getHours();
+      const slot = (hour >= 8 && hour < 20) ? 'day' : 'night';
       per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pps[i], wind:winds[i], net: hourlyNet[i]});
     });
 
-I need to replace groupDayNight earlier: we already changed it but maybe double. But user's main point: classes and ids mismatched. They now say styling is gone; likely because CSS selectors target .summary-table-table but actual DOM still creates div class 'summary-table' earlier; we replaced with semantic table but current file still had div earlier; but we overwrote with new content that uses table. We wrote full main.js replacement earlier. Now user says classes and ids mismatched and wants fix — they also pasted CSS earlier; now they say classes/ids do not match. Let's inspect generated DOM: user likely sees plain text because table element doesn't have class matching CSS: our CSS uses .summary-table-table; our table has class summary-table-table — correct. But perhaps the inserted DOM uses class 'summary-table-table' but CSS loaded with different version? However user earlier said CSS shows 
+    // Derive summary and render
+    const keys = Object.keys(per).slice(0,3);
+    const summary = keys.map(k=>{
+      const day = per[k].day; const night = per[k].night;
+      const summarize = (arr) => {
+        if(!arr || arr.length===0) return {min_temp:null, max_temp:null, tot_prec:0, avg_pprob:0, max_wind:0, fructaan:0};
+        const tempsArr = arr.map(x=>x.temp); const precsArr = arr.map(x=>x.prec); const ppsArr = arr.map(x=>x.pprob); const windsArr = arr.map(x=>x.wind); const nets = arr.map(x=>x.net || 0);
+        return {min_temp: Math.min(...tempsArr), max_temp:Math.max(...tempsArr), tot_prec: precsArr.reduce((a,b)=>a+b,0), avg_pprob: ppsArr.reduce((a,b)=>a+b,0)/ppsArr.length, max_wind: Math.max(...windsArr), fructaan: nets.reduce((a,b)=>a+b,0)};
+      };
+      return {date:k, day:summarize(day), night:summarize(night)};
+    });
+
+    // Render chart and summary
+    renderChart(times, temps, precs);
+    renderSummary(summary);
+
+  } catch(e){
+    console.error('Failed to fetch forecast or render:', e);
+    alert('Kon weerdata niet ophalen. Controleer netwerk of probeer later.');
+  }
+}
+
+refreshBtn.addEventListener('click', ()=>update());
+
+// Install prompt handling
+const installBtn = document.getElementById('installBtn');
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e; // Save the event for later
+  if(installBtn) {
+    installBtn.style.display = 'inline-block';
+  }
+});
+
+if(installBtn){
+  installBtn.addEventListener('click', async () => {
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if(choiceResult.outcome === 'accepted'){
+        console.log('User accepted the install prompt');
+        installBtn.style.display = 'none';
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      deferredPrompt = null;
+    } else {
+      const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      if(isiOS){
+        alert('iOS install: gebruik de deelknop onderaan (Square met pijl) en kies "Zet in beginscherm"');
+      } else {
+        alert('Android/Chrome: open het menu (⋮) en kies "Add to Home screen" of gebruik de browser UI om toe te voegen.');
+      }
+    }
+  });
+}
+
+window.addEventListener('appinstalled', (evt) => {
+  console.log('App installed');
+  if(installBtn) installBtn.style.display = 'none';
+});
+
+// simple service worker registration for PWA with update flow
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(async (reg) => {
+    try { await reg.update(); } catch(e){ /* ignore */ }
+
+    if(reg.waiting){
+      reg.waiting.postMessage({action:'skipWaiting'});
+    }
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  }).catch(() => { /* ignore */ });
+}
