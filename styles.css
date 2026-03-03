@@ -14,14 +14,32 @@ main{padding:12px}
 #forecastChart{width:100%;height:260px}
 
 /* Table styles: use semantic table for better alignment */
+/* Support both semantic table (.summary-table-table) and legacy div-based (.summary-table) structures */
+
+/* Semantic table */
 .summary-table-table{width:100%;border-collapse:collapse;overflow:auto}
 .summary-table-table thead th{position:sticky;top:0;background:#f0f6ff;padding:10px;border-bottom:2px solid #e6eefc;text-align:center;font-weight:700}
 .summary-table-table tbody td{padding:10px;border-bottom:1px solid #eef4ff;vertical-align:middle}
 .summary-table-table td.metric{width:220px;color:#0b3d91;font-weight:600;text-align:left}
 .summary-table-table td.numeric{text-align:right;font-variant-numeric:tabular-nums}
 .summary-table-table td.iconcell{text-align:center}
+
+/* Legacy div-based table (fallback) */
+.summary-table{display:table;width:100%}
+.summary-table .row{display:table-row}
+.summary-table .cell{display:table-cell;padding:10px;border-bottom:1px solid #eef4ff;vertical-align:middle}
+.summary-table .cell.metric{width:220px;color:#0b3d91;font-weight:600;text-align:left}
+.summary-table .cell.numeric{text-align:right;font-variant-numeric:tabular-nums}
+.summary-table .cell.iconcell{text-align:center}
+
 .ic{display:inline-block;width:20px;height:20px;border-radius:4px;margin-right:8px;vertical-align:middle}
 .ic-none{background:#eaf8ea;border:1px solid #d1f0d1}
+.ic-light{background:#fff5e6;border:1px solid #ffb74d}
+.ic-medium{background:#ffe6f0;border:1px solid #ff80ab}
+.ic-heavy{background:#e6f2ff;border:1px solid #4da6ff}
+.ic-ok{background:#eaf8ea;border:1px solid #cdeccf}
+.ic-warn{background:#fff9e6;border:1px solid #fff2bf}
+.ic-bad{background:#ffe6e6;border:1px solid #ffcccc}
 .ic-light{background:#fff5e6;border:1px solid #ffb74d}
 .ic-medium{background:#ffe6f0;border:1px solid #ff80ab}
 .ic-heavy{background:#e6f2ff;border:1px solid #4da6ff}
