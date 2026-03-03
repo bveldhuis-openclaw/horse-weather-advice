@@ -293,10 +293,21 @@ async function update(){
     let rawWinds = data.hourly.windspeed_10m;
     let rawClouds = data.hourly.cloudcover || new Array(rawTimes.length).fill(0);
 
-    // choose only future hours starting from now (local) up to next 72 hours
-    const now = new Date();
-    let startIdx = rawTimes.findIndex(t => new Date(t) >= now);
-    if(startIdx === -1) startIdx = 0; // fallback if API times are all in past for some reason
+    // choose only future hours starting from now (in the API timezone) up to next 72 hours
+    // API times are in the requested timezone (Europe/Amsterdam). Build current time string in that timezone.
+    function nowInTZString(timeZone){
+      const now = new Date();
+      const f = new Intl.DateTimeFormat('en-CA', { timeZone, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
+      const parts = f.formatToParts(now);
+      const p = {};
+      parts.forEach(x=>p[x.type]=x.value);
+      // en-CA gives YYYY-MM-DD, but parts allow us to assemble
+      const yyyy = p.year; const mm = p.month; const dd = p.day; const hh = p.hour; const min = p.minute;
+      return `${yyyy}-${mm}-${dd}T${hh}:${min}`; // matches API format
+    }
+    const nowStr = nowInTZString('Europe/Amsterdam');
+    let startIdx = rawTimes.findIndex(t => t >= nowStr);
+    if(startIdx === -1) startIdx = 0;
     const endIdx = Math.min(startIdx + 72, rawTimes.length);
 
     const times = rawTimes.slice(startIdx, endIdx);
@@ -362,7 +373,9 @@ async function update(){
       const dt = new Date(t);
       const dateKey = dt.toISOString().slice(0,10);
       if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
-      const slot = (dt.getHours()>=9 && dt.getHours()<=21)? 'day':'night';
+      // Day: 08:00 (inclusive) to 20:00 (exclusive). Night: 20:00 - 08:00
+    const hour = dt.getHours();
+    const slot = (hour >= 8 && hour < 20) ? 'day' : 'night';
       per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pps[i], wind:winds[i], net: hourlyNet[i]});
     });
 
