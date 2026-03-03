@@ -34,7 +34,8 @@ function groupDayNight(times, temps, precs, pprobs, winds){
     const dateKey = dt.toISOString().slice(0,10);
     if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
     const hour = dt.getHours();
-    const slot = (hour>=9 && hour<=21)? 'day':'night';
+    // Day: 08:00 (inclusive) to 20:00 (exclusive)
+    const slot = (hour >= 8 && hour < 20) ? 'day' : 'night';
     per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pprobs[i], wind:winds[i]});
   });
   const keys = Object.keys(per).slice(0,3);
