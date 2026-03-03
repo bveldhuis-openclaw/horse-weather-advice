@@ -1,6 +1,6 @@
-const CACHE = 'horse-weather-v2';
+const CACHE = 'horse-weather-v3';
 const OFFLINE_URL = '/index.html';
-const ASSETS = [OFFLINE_URL, '/styles.css', '/main.js', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
+const ASSETS = [OFFLINE_URL, '/styles.css?v=20260303', '/main.js?v=20260302', '/manifest.json?v=20260303', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
