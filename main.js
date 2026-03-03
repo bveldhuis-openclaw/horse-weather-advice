@@ -44,7 +44,7 @@ function groupDayNight(times, temps, precs, pprobs, winds){
     function summarize(arr){
       if(!arr || arr.length===0) return {min_temp:null, max_temp:null, tot_prec:0, avg_pprob:0, max_wind:0};
       const temps = arr.map(x=>x.temp); const precs = arr.map(x=>x.prec); const pps = arr.map(x=>x.pprob); const winds = arr.map(x=>x.wind);
-      return {min_temp: Math.min(...temps), max_temp:Math.max(...temps), tot_prec: precs.reduce((a,b)=>a+b,0), avg_ppob: pps.reduce((a,b)=>a+b,0)/pps.length, avg_pprob: pps.reduce((a,b)=>a+b,0)/pps.length, max_wind: Math.max(...winds)};
+      return {min_temp: Math.min(...temps), max_temp:Math.max(...temps), tot_prec: precs.reduce((a,b)=>a+b,0), avg_pprob: pps.reduce((a,b)=>a+b,0)/pps.length, max_wind: Math.max(...winds)};
     }
     return {date:k, day:summarize(day), night:summarize(night)};
   });
@@ -54,9 +54,6 @@ function groupDayNight(times, temps, precs, pprobs, winds){
 function renderSummary(summary){
   const container = document.getElementById('summary');
   container.innerHTML = '';
-  // create table transposed
-  const table = document.createElement('div');
-  table.className='summary-table';
 
   // Build periods (two columns per date: dag, nacht)
   const rawPeriods = [];
@@ -66,43 +63,38 @@ function renderSummary(summary){
     rawPeriods.push({label: d + ' (nacht)', data: s.night});
   });
 
-  // Filter out empty periods (no meaningful data) and limit to 5 columns
   function isEmptyPeriod(p){
     const d = p.data;
     if(!d) return true;
-    // if min temp missing => empty
     if(d.min_temp === null || d.min_temp === undefined) return true;
-    // numericize
     const minT = Number(d.min_temp);
     const maxT = Number(d.max_temp);
     const totP = Number(d.tot_prec);
     const avgP = Number(d.avg_pprob);
-    // if all stats are zero or NaN, treat as empty
     const vals = [minT, maxT, totP, avgP];
     const allZeroOrNaN = vals.every(v => (isNaN(v) || v === 0));
     if(allZeroOrNaN) return true;
-    // if temperature range is negligible and no precipitation probability, consider empty
     if(!isNaN(minT) && !isNaN(maxT) && Math.abs(maxT - minT) < 0.1 && (isNaN(avgP) || avgP === 0) && totP === 0) return true;
     return false;
   }
-  let periods = rawPeriods.filter(p=>!isEmptyPeriod(p));
-  // debug logs to help diagnose client-side
-  console.debug('rawPeriods', rawPeriods);
-  console.debug('filtered periods', periods);
-  periods = periods.slice(0,6);
 
-  // build header row with one metric cell + one header per period
-  const header = document.createElement('div'); header.className='row header';
-  const metricHeader = document.createElement('div'); metricHeader.className = 'cell metric';
-  header.appendChild(metricHeader);
-  periods.forEach(p=>{
-    const ph = document.createElement('div'); ph.className = 'cell period';
-    ph.innerHTML = p.label.replace('\n','<br>');
-    header.appendChild(ph);
-  });
-  table.appendChild(header);
+  const periods = rawPeriods.filter(p=>!isEmptyPeriod(p)).slice(0,6);
 
-  // metrics definitions
+  // create a semantic table element
+  const table = document.createElement('table');
+  table.className = 'summary-table-table';
+
+  // THEAD
+  const thead = document.createElement('thead');
+  const htr = document.createElement('tr');
+  const thMetric = document.createElement('th'); thMetric.textContent = '';
+  htr.appendChild(thMetric);
+  periods.forEach(p=>{ const th = document.createElement('th'); th.innerHTML = p.label.replace('\n','<br>'); htr.appendChild(th); });
+  thead.appendChild(htr);
+  table.appendChild(thead);
+
+  // TBODY
+  const tbody = document.createElement('tbody');
   const metrics = [
     {id:'min', label:'Min. temp (°C)', getter: s=>s.min_temp},
     {id:'max', label:'Max. temp (°C)', getter: s=>s.max_temp},
@@ -112,30 +104,25 @@ function renderSummary(summary){
     {id:'fruc', label:'Fructaanindex (units)', getter: s=>s.fructaan},
   ];
 
-  // Build rows for each metric
   metrics.forEach(m=>{
-    const row = document.createElement('div'); row.className='row';
-    const metricCell = document.createElement('div'); metricCell.className='cell metric'; metricCell.textContent=m.label;
-    row.appendChild(metricCell);
+    const tr = document.createElement('tr');
+    const tdLabel = document.createElement('td'); tdLabel.className='metric'; tdLabel.textContent = m.label; tr.appendChild(tdLabel);
     periods.forEach(p=>{
-      const c = document.createElement('div'); c.className='cell numeric';
+      const td = document.createElement('td'); td.className='numeric';
       const v = m.getter(p.data);
-      c.textContent = (v == null || Number.isNaN(v))? '-' : (Math.round((v+Number.EPSILON)*10)/10);
-      row.appendChild(c);
+      td.textContent = (v == null || Number.isNaN(v)) ? '-' : (Math.round((v+Number.EPSILON)*10)/10);
+      tr.appendChild(td);
     });
-    table.appendChild(row);
+    tbody.appendChild(tr);
   });
 
-  // Dekenadvies row with icons + grams
-
-  // Add a risk row derived from fructaan value (if present)
-  const rowFrucRisk = document.createElement('div'); rowFrucRisk.className='row';
-  const frLabel = document.createElement('div'); frLabel.className='cell metric'; frLabel.textContent='Fructaan risico';
-  rowFrucRisk.appendChild(frLabel);
+  // Fructaan risico row
+  const trRisk = document.createElement('tr');
+  const tdRiskLabel = document.createElement('td'); tdRiskLabel.className='metric'; tdRiskLabel.textContent='Fructaan risico'; trRisk.appendChild(tdRiskLabel);
   periods.forEach(p=>{
-    const c=document.createElement('div'); c.className='cell iconcell';
+    const td = document.createElement('td');
     const val = p.data.fructaan;
-    if(val===undefined || val===null || isNaN(Number(val))){ c.textContent='-'; }
+    if(val===undefined || val===null || isNaN(Number(val))){ td.textContent='-'; }
     else{
       const v = Number(val);
       let risk='laag';
@@ -143,40 +130,37 @@ function renderSummary(summary){
       else if(v>15) risk='hoog';
       else if(v>5) risk='gematigd';
       else risk='laag';
-      c.textContent = `${Math.round(v*10)/10} (${risk})`;
+      td.textContent = `${Math.round(v*10)/10} (${risk})`;
     }
-    rowFrucRisk.appendChild(c);
+    trRisk.appendChild(td);
   });
-  table.appendChild(rowFrucRisk);
-  const rowDek = document.createElement('div'); rowDek.className='row';
-  const dekLabel = document.createElement('div'); dekLabel.className='cell metric'; dekLabel.textContent='Dekenadvies';
-  rowDek.appendChild(dekLabel);
+  tbody.appendChild(trRisk);
+
+  // Dekenadvies
+  const trDek = document.createElement('tr');
+  const tdDekLabel = document.createElement('td'); tdDekLabel.className='metric'; tdDekLabel.textContent='Dekenadvies'; trDek.appendChild(tdDekLabel);
   periods.forEach(p=>{
-    const c=document.createElement('div'); c.className='cell iconcell';
+    const td = document.createElement('td'); td.className='iconcell';
     const adv = blanketAdvice(p.data.min_temp);
-    const span = document.createElement('span'); span.className = 'ic ic-' + adv.code;
-    c.appendChild(span);
-    const txt = document.createTextNode(' ' + adv.grams + 'g');
-    c.appendChild(txt);
-    rowDek.appendChild(c);
+    const span = document.createElement('span'); span.className='ic ic-'+adv.code; span.style.marginRight='6px'; td.appendChild(span);
+    td.appendChild(document.createTextNode(' '+adv.grams+'g'));
+    trDek.appendChild(td);
   });
-  table.appendChild(rowDek);
+  tbody.appendChild(trDek);
 
   // Weideadvies
-  const rowWeide = document.createElement('div'); rowWeide.className='row';
-  const weideLabel = document.createElement('div'); weideLabel.className='cell metric'; weideLabel.textContent='Weideadvies';
-  rowWeide.appendChild(weideLabel);
+  const trWeide = document.createElement('tr');
+  const tdWeideLabel = document.createElement('td'); tdWeideLabel.className='metric'; tdWeideLabel.textContent='Weideadvies'; trWeide.appendChild(tdWeideLabel);
   periods.forEach(p=>{
-    const c=document.createElement('div'); c.className='cell iconcell';
+    const td = document.createElement('td'); td.className='iconcell';
     const adv = pastureAdvice(p.data.tot_prec);
-    const span = document.createElement('span'); span.className = 'ic ic-' + adv.code;
-    c.appendChild(span);
-    const txt = document.createTextNode(' ' + adv.text);
-    c.appendChild(txt);
-    rowWeide.appendChild(c);
+    const span = document.createElement('span'); span.className='ic ic-'+adv.code; span.style.marginRight='6px'; td.appendChild(span);
+    td.appendChild(document.createTextNode(' '+adv.text));
+    trWeide.appendChild(td);
   });
-  table.appendChild(rowWeide);
+  tbody.appendChild(trWeide);
 
+  table.appendChild(tbody);
   container.appendChild(table);
 }
 
@@ -380,87 +364,4 @@ async function update(){
       per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pps[i], wind:winds[i], net: hourlyNet[i]});
     });
 
-    const keys = Object.keys(per).slice(0,3);
-    const summary = keys.map(k=>{
-      function summarize(arr){
-        if(!arr || arr.length===0) return {min_temp:null, max_temp:null, tot_prec:0, avg_pprob:0, max_wind:0, fructaan:0};
-        const tempsA = arr.map(x=>x.temp);
-        const precsA = arr.map(x=>x.prec);
-        const ppsA = arr.map(x=>x.pprob);
-        const windsA = arr.map(x=>x.wind);
-        const netA = arr.map(x=>x.net);
-        return {min_temp: Math.min(...tempsA), max_temp: Math.max(...tempsA), tot_prec: precsA.reduce((a,b)=>a+b,0), avg_pprob: ppsA.reduce((a,b)=>a+b,0)/ppsA.length, max_wind: Math.max(...windsA), fructaan: netA.reduce((a,b)=>a+b,0)};
-      }
-      return {date:k, day:summarize(per[k].day), night:summarize(per[k].night)};
-    });
-
-    renderChart(times, temps, precs);
-    renderSummary(summary);
-  }catch(e){
-    console.error('Failed to fetch forecast or render:', e);
-    alert('Kon weerdata niet ophalen. Controleer netwerk of probeer later.');
-  }
-}
-
-refreshBtn.addEventListener('click', ()=>update());
-
-// Install prompt handling
-const installBtn = document.getElementById('installBtn');
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e; // Save the event for later
-  if(installBtn) {
-    installBtn.style.display = 'inline-block';
-  }
-});
-
-if(installBtn){
-  installBtn.addEventListener('click', async () => {
-    if(deferredPrompt){
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      if(choiceResult.outcome === 'accepted'){
-        console.log('User accepted the install prompt');
-        installBtn.style.display = 'none';
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      deferredPrompt = null;
-    } else {
-      // No beforeinstallprompt available - show manual instructions
-      const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      if(isiOS){
-        alert('iOS install: gebruik de deelknop onderaan (Square met pijl) en kies "Zet in beginscherm"');
-      } else {
-        alert('Android/Chrome: open het menu (⋮) en kies "Add to Home screen" of gebruik de browser UI om toe te voegen.');
-      }
-    }
-  });
-}
-
-window.addEventListener('appinstalled', (evt) => {
-  console.log('App installed');
-  if(installBtn) installBtn.style.display = 'none';
-});
-
-// on load
-update();
-
-// simple service worker registration for PWA with update flow
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').then(async (reg) => {
-    // try update immediately
-    try { await reg.update(); } catch(e){}
-
-    if(reg.waiting){
-      // ask waiting SW to skipWaiting, then reload when controller changes
-      reg.waiting.postMessage({action:'skipWaiting'});
-    }
-
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      // reload once when new service worker takes control
-      window.location.reload();
-    });
-  }).catch(()=>{});
-}
+I need to replace groupDayNight earlier: we already changed it but maybe double. But user's main point: classes and ids mismatched. They now say styling is gone; likely because CSS selectors target .summary-table-table but actual DOM still creates div class 'summary-table' earlier; we replaced with semantic table but current file still had div earlier; but we overwrote with new content that uses table. We wrote full main.js replacement earlier. Now user says classes and ids mismatched and wants fix — they also pasted CSS earlier; now they say classes/ids do not match. Let's inspect generated DOM: user likely sees plain text because table element doesn't have class matching CSS: our CSS uses .summary-table-table; our table has class summary-table-table — correct. But perhaps the inserted DOM uses class 'summary-table-table' but CSS loaded with different version? However user earlier said CSS shows 
