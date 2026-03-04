@@ -334,10 +334,18 @@ async function update(){
     times.forEach((t, i)=>{
       // Use the API-provided timestamp strings directly (they are in the requested timezone)
       const ts = String(t);
-      const dateKey = ts.slice(0,10); // YYYY-MM-DD from API (Europe/Amsterdam)
-      const hour = parseInt(ts.slice(11,13), 10);
-      if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
+      // Interpret as local-time in the API timezone; create a Date to compute prev-day when needed
+      const dt = new Date(ts);
+      const hour = dt.getHours();
       const slot = (hour >= 8 && hour < 20) ? 'day' : 'night';
+      // Night hours after midnight (hour < 8) belong to the previous calendar date's night
+      let dateKey = dt.toISOString().slice(0,10);
+      if(slot === 'night' && hour < 8){
+        const prev = new Date(dt);
+        prev.setDate(prev.getDate() - 1);
+        dateKey = prev.toISOString().slice(0,10);
+      }
+      if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
       per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pps[i], wind:winds[i], net: hourlyNet[i]});
     });
 
