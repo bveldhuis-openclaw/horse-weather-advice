@@ -1,54 +1,59 @@
 /* Mobile-first simple styling */
-:root{--primary:#0b3d91;--muted:#6b7280;--card:#ffffff;--accent:#d62728}
-*{box-sizing:border-box}
-html,body,#app{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#f2f6ff;color:#111}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,var(--primary),#2a60b8);color:#fff}
-.topbar h1{font-size:18px;margin:0}
-.topbar button{background:rgba(255,255,255,0.12);border:0;color:#fff;padding:8px 10px;border-radius:8px}
-.top-actions{display:flex;gap:8px;align-items:center}
-#installBtn{background:rgba(255,255,255,0.16);border:0;color:#fff;padding:8px 10px;border-radius:8px}
-main{padding:12px}
-.card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(16,24,40,0.04)}
-.small{padding:10px}
-.muted{color:var(--muted);font-size:13px}
-#forecastChart{width:100%;height:260px}
+:root { --primary: #0b3d91; --muted: #6b7280; --card: #fff; --accent: #d62728; }
+* { box-sizing: border-box; }
+
+html,
+body,
+#app { height: 100%; margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f2f6ff; color: #111; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(90deg, var(--primary), #2a60b8); color: #fff; }
+.topbar h1 { font-size: 18px; margin: 0; }
+.topbar button { background: rgb(255 255 255 / 12%); border: 0; color: #fff; padding: 8px 10px; border-radius: 8px; }
+.top-actions { display: flex; gap: 8px; align-items: center; }
+#installBtn { background: rgb(255 255 255 / 16%); border: 0; color: #fff; padding: 8px 10px; border-radius: 8px; }
+main { padding: 12px; }
+.card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgb(16 24 40 / 4%); }
+.small { padding: 10px; }
+.muted { color: var(--muted); font-size: 13px; }
+#forecastChart { width: 100%; height: 260px; }
 
 /* Table styles: use semantic table for better alignment */
+
 /* Support both semantic table (.summary-table-table) and legacy div-based (.summary-table) structures */
 
 /* Semantic table */
-.summary-table-table{width:100%;border-collapse:collapse;overflow:auto}
-.summary-table-table thead th{position:sticky;top:0;background:#f0f6ff;padding:10px;border-bottom:2px solid #e6eefc;text-align:center;font-weight:700}
-.summary-table-table tbody td{padding:10px;border-bottom:1px solid #eef4ff;vertical-align:middle}
-.summary-table-table td.metric{width:220px;color:#0b3d91;font-weight:600;text-align:left}
-.summary-table-table td.numeric{text-align:right;font-variant-numeric:tabular-nums}
-.summary-table-table td.iconcell{text-align:center}
+.summary-table-table { width: 100%; border-collapse: collapse; overflow: auto; }
+.summary-table-table thead th { position: sticky; top: 0; background: #f0f6ff; padding: 10px; border-bottom: 2px solid #e6eefc; text-align: center; font-weight: 700; }
+.summary-table-table tbody td { padding: 10px; border-bottom: 1px solid #eef4ff; vertical-align: middle; }
+.summary-table-table td.metric { width: 220px; color: #0b3d91; font-weight: 600; text-align: left; }
+.summary-table-table td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.summary-table-table td.iconcell { text-align: center; }
 
 /* Legacy div-based table (fallback) */
-.summary-table{display:table;width:100%}
-.summary-table .row{display:table-row}
-.summary-table .cell{display:table-cell;padding:10px;border-bottom:1px solid #eef4ff;vertical-align:middle}
-.summary-table .cell.metric{width:220px;color:#0b3d91;font-weight:600;text-align:left}
-.summary-table .cell.numeric{text-align:right;font-variant-numeric:tabular-nums}
-.summary-table .cell.iconcell{text-align:center}
+.summary-table { display: table; width: 100%; }
+.summary-table .row { display: table-row; }
+.summary-table .cell { display: table-cell; padding: 10px; border-bottom: 1px solid #eef4ff; vertical-align: middle; }
+.summary-table .cell.metric { width: 220px; color: #0b3d91; font-weight: 600; text-align: left; }
+.summary-table .cell.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.summary-table .cell.iconcell { text-align: center; }
 
-.ic{display:inline-block;width:20px;height:20px;border-radius:4px;margin-right:8px;vertical-align:middle}
-.ic-none{background:#eaf8ea;border:1px solid #d1f0d1}
-.ic-light{background:#fff5e6;border:1px solid #ffb74d}
-.ic-medium{background:#ffe6f0;border:1px solid #ff80ab}
-.ic-heavy{background:#e6f2ff;border:1px solid #4da6ff}
-.ic-ok{background:#eaf8ea;border:1px solid #cdeccf}
-.ic-warn{background:#fff9e6;border:1px solid #fff2bf}
-.ic-bad{background:#ffe6e6;border:1px solid #ffcccc}
-.ic-light{background:#fff5e6;border:1px solid #ffb74d}
-.ic-medium{background:#ffe6f0;border:1px solid #ff80ab}
-.ic-heavy{background:#e6f2ff;border:1px solid #4da6ff}
-.ic-ok{background:#eaf8ea;border:1px solid #cdeccf}
-.ic-warn{background:#fff9e6;border:1px solid #fff2bf}
-.ic-bad{background:#ffe6e6;border:1px solid #ffcccc}
+.ic { display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
+.ic-none { background: #eaf8ea; border: 1px solid #d1f0d1; }
+.ic-light { background: #fff5e6; border: 1px solid #ffb74d; }
+.ic-medium { background: #ffe6f0; border: 1px solid #ff80ab; }
+.ic-heavy { background: #e6f2ff; border: 1px solid #4da6ff; }
+.ic-ok { background: #eaf8ea; border: 1px solid #cdeccf; }
+.ic-warn { background: #fff9e6; border: 1px solid #fff2bf; }
+.ic-bad { background: #ffe6e6; border: 1px solid #fcc; }
+.ic-light { background: #fff5e6; border: 1px solid #ffb74d; }
+.ic-medium { background: #ffe6f0; border: 1px solid #ff80ab; }
+.ic-heavy { background: #e6f2ff; border: 1px solid #4da6ff; }
+.ic-ok { background: #eaf8ea; border: 1px solid #cdeccf; }
+.ic-warn { background: #fff9e6; border: 1px solid #fff2bf; }
+.ic-bad { background: #ffe6e6; border: 1px solid #fcc; }
 
-@media (max-width:700px){
-  .summary-table-table thead th, .summary-table-table td{font-size:13px;padding:8px}
-  .summary-table-table td.metric{width:140px}
-  main{padding:8px}
+@media (max-width: 700px) {
+  .summary-table-table thead th,
+  .summary-table-table td { font-size: 13px; padding: 8px; }
+  .summary-table-table td.metric { width: 140px; }
+  main { padding: 8px; }
 }
