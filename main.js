@@ -45,30 +45,37 @@ function renderSummary(summary){
   const container = document.getElementById('summary');
   container.innerHTML = '';
 
-  // Build periods (two columns per date: dag, nacht)
-  const rawPeriods = [];
-  summary.forEach(s=>{
+  // Build periods in the order: day, night, day, night, day (for up to 3 days)
+  // We keep day columns always and include nights for the first two days so layout is: day-night-day-night-day
+  const periods = [];
+  for (let i = 0; i < summary.length; i++) {
+    const s = summary[i];
     const d = s.date.replace(/(\d{4})-(\d{2})-(\d{2})/,'$3/$2'); // dd/mm
-    rawPeriods.push({label: d + ' (dag)', data: s.day});
-    rawPeriods.push({label: d + ' (nacht)', data: s.night});
-  });
+    periods.push({ label: d + ' (dag)', data: s.day });
+    // include night for first two days only (so final layout ends with a day)
+    if (i < summary.length - 1) {
+      periods.push({ label: d + ' (nacht)', data: s.night });
+    }
+  }
 
-  const isEmptyPeriod = (p) => {
+  // Drop any periods that are completely empty (both day and night missing for that date handled by checking data existence)
+  const nonEmptyPeriods = periods.filter(p => {
     const d = p.data;
-    if(!d) return true;
-    if(d.min_temp === null || d.min_temp === undefined) return true;
+    if (!d) return false;
+    if (d.min_temp === null || d.min_temp === undefined) return false;
     const minT = Number(d.min_temp);
     const maxT = Number(d.max_temp);
     const totP = Number(d.tot_prec);
     const avgP = Number(d.avg_pprob);
     const vals = [minT, maxT, totP, avgP];
     const allZeroOrNaN = vals.every(v => (isNaN(v) || v === 0));
-    if(allZeroOrNaN) return true;
-    if(!isNaN(minT) && !isNaN(maxT) && Math.abs(maxT - minT) < 0.1 && (isNaN(avgP) || avgP === 0) && totP === 0) return true;
-    return false;
-  };
+    if (allZeroOrNaN) return false;
+    if (!isNaN(minT) && !isNaN(maxT) && Math.abs(maxT - minT) < 0.1 && (isNaN(avgP) || avgP === 0) && totP === 0) return false;
+    return true;
+  });
 
-  const periods = rawPeriods.filter(p=>!isEmptyPeriod(p)).slice(0,6);
+  // Limit to 5 columns (day-night-day-night-day) if more
+  const finalPeriods = nonEmptyPeriods.slice(0,5);
 
   // create a semantic table element
   const table = document.createElement('table');
@@ -79,7 +86,7 @@ function renderSummary(summary){
   const htr = document.createElement('tr');
   const thMetric = document.createElement('th'); thMetric.textContent = '';
   htr.appendChild(thMetric);
-  periods.forEach(p=>{ const th = document.createElement('th'); th.innerHTML = p.label.replace('\n','<br>'); htr.appendChild(th); });
+  finalPeriods.forEach(p=>{ const th = document.createElement('th'); th.innerHTML = p.label.replace('\n','<br>'); htr.appendChild(th); });
   thead.appendChild(htr);
   table.appendChild(thead);
 
