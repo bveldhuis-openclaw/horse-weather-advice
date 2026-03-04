@@ -1,6 +1,17 @@
-import Chart from 'https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js';
-
 const API = 'https://api.open-meteo.com/v1/forecast';
+
+// Load Chart.js UMD bundle at runtime to avoid unresolved ESM dependency (@kurkle/color)
+function loadChartUmd(){
+  if(window.Chart) return Promise.resolve();
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js';
+    s.onload = () => resolve();
+    s.onerror = (e) => reject(new Error('Failed to load Chart.js: '+e));
+    document.head.appendChild(s);
+  });
+}
+
 
 const refreshBtn = document.getElementById('refreshBtn');
 
@@ -406,3 +417,6 @@ if('serviceWorker' in navigator){
     });
   }).catch(() => { /* ignore */ });
 }
+
+// Ensure Chart.js UMD is loaded before first update
+loadChartUmd().then(()=>update()).catch((e)=>{console.error('Chart load failed',e); update();});
