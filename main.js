@@ -1,7 +1,7 @@
 import Chart from 'https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js';
 
 const API = 'https://api.open-meteo.com/v1/forecast';
-const chartEl = document.getElementById('forecastChart');
+
 const refreshBtn = document.getElementById('refreshBtn');
 
 async function getPosition(){
@@ -11,7 +11,7 @@ async function getPosition(){
   });
 }
 
-const hoursFromNowArray = (times) => times.map(t=>new Date(t));
+
 
 function blanketAdvice(minTemp){
   if(minTemp==null) return {text:'Geen data',code:'none', grams:0};
@@ -29,29 +29,6 @@ function pastureAdvice(totPrec){
   return {text:'OK',code:'ok'};
 }
 
-function groupDayNight(times, temps, precs, pprobs, winds){
-  const per = {};
-  times.forEach((t, i)=>{
-    const dt = new Date(t);
-    const dateKey = dt.toISOString().slice(0,10);
-    if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
-    const hour = dt.getHours();
-    // Day: 08:00 (inclusive) to 20:00 (exclusive)
-    const slot = (hour >= 8 && hour < 20) ? 'day' : 'night';
-    per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pprobs[i], wind:winds[i]});
-  });
-  const keys = Object.keys(per).slice(0,3);
-  const summary = keys.map(k=>{
-    const day = per[k].day; const night = per[k].night;
-    const summarize = (arr) => {
-      if(!arr || arr.length===0) return {min_temp:null, max_temp:null, tot_prec:0, avg_pprob:0, max_wind:0};
-      const tempsArr = arr.map(x=>x.temp); const precsArr = arr.map(x=>x.prec); const ppsArr = arr.map(x=>x.pprob); const windsArr = arr.map(x=>x.wind);
-      return {min_temp: Math.min(...tempsArr), max_temp:Math.max(...tempsArr), tot_prec: precsArr.reduce((a,b)=>a+b,0), avg_pprob: ppsArr.reduce((a,b)=>a+b,0)/ppsArr.length, max_wind: Math.max(...windsArr)};
-    };
-    return {date:k, day:summarize(day), night:summarize(night)};
-  });
-  return summary;
-}
 
 function renderSummary(summary){
   const container = document.getElementById('summary');
@@ -298,8 +275,8 @@ async function update(){
 
     // daily sunrise/sunset arrays
     const daily = data.daily || {};
-    const sunrises = daily.sunrise || [];
-    const sunsets = daily.sunset || [];
+    
+    
 
     // helper: compute fructaan units for each hour
     const fructaanForHour = (idx) => {
@@ -410,7 +387,7 @@ if(installBtn){
   });
 }
 
-window.addEventListener('appinstalled', (evt) => {
+window.addEventListener('appinstalled', () => {
   console.log('App installed');
   if(installBtn) installBtn.style.display = 'none';
 });
