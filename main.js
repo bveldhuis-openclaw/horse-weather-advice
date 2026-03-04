@@ -332,10 +332,11 @@ async function update(){
     const hourlyNet = times.map((t,i)=>fructaanForHour(i));
     const per = {};
     times.forEach((t, i)=>{
-      const dt = new Date(t);
-      const dateKey = dt.toISOString().slice(0,10);
+      // Use the API-provided timestamp strings directly (they are in the requested timezone)
+      const ts = String(t);
+      const dateKey = ts.slice(0,10); // YYYY-MM-DD from API (Europe/Amsterdam)
+      const hour = parseInt(ts.slice(11,13), 10);
       if(!per[dateKey]) per[dateKey] = {day:[], night:[]};
-      const hour = dt.getHours();
       const slot = (hour >= 8 && hour < 20) ? 'day' : 'night';
       per[dateKey][slot].push({t, temp:temps[i], prec:precs[i], pprob:pps[i], wind:winds[i], net: hourlyNet[i]});
     });
